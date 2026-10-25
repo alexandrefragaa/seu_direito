@@ -103,7 +103,7 @@ export default function Home() {
         const title = key === "lula" ? "Lula" : "Flávio Bolsonaro";
         const party = key === "lula" ? "PT · 13" : "PL · 22";
         return <article className="featured-card" key={key}>
-          <div className="portrait-wrap">{c?.photo ? <img src={c.photo} alt={`Foto oficial de ${title}`} className="featured-photo" onError={e => { e.currentTarget.style.display = "none"; }} /> : <div className="portrait-placeholder">{title.split(" ").map(s => s[0]).join("").slice(0,2)}</div>}</div>
+          <div className="portrait-wrap"><img src={key === "lula" ? "https://videocdn.pollo.ai/web-cdn/pollo/production/cmus6poqec1zj8g0ztgi5snj6/image/1792960043912-228bcec3-2229-489d-a5c4-5ad9017779fb.jpg" : "https://videocdn.pollo.ai/web-cdn/pollo/production/cmus6poqec1zj8g0ztgi5snj6/image/1792960046266-238762e8-4c62-4f94-a784-1b4f09ecbed6.jpg"} alt={`Foto de ${title}`} className="featured-photo" onError={e => { e.currentTarget.style.display = "none"; }} /></div>
           <div className="featured-details"><div className="candidate-party">{party}</div><h2>{title}</h2><div className="candidate-total">{c ? fmt(c.votes) : "—"} <span>votos</span></div><div className="candidate-percent">{c ? pct(c.percent) : "Aguardando dados oficiais"}</div><div className="featured-bar"><i style={{ width: `${Math.min(100, Math.max(0, c?.percent ?? 0))}%` }} /></div></div>
         </article>;
       })}
