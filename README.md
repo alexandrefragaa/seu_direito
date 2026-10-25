@@ -1,59 +1,26 @@
-# Seu_direito — conferência eleitoral independente
+# Seu Direito — painel eleitoral ao vivo
 
-O **Seu_direito** é um projeto para recalcular e conferir dados eleitorais com código próprio, mostrar a origem do arquivo e tornar limitações e divergências visíveis.
+A página inicial apresenta um painel para acompanhar resultados oficiais do TSE, com fotos de candidatos, votos, percentuais, seções totalizadas, comparecimento, brancos, nulos e navegação por Brasil, estado, município e exterior.
 
-## Estado atual
+## Integração ao vivo
 
-A versão publicada implementa uma **importação experimental de CSV** de votação por seção e um catálogo de links diretos dos arquivos de votação por seção para as 27 UFs, além de cinco conjuntos nacionais. Ela aceita arquivos de até 25 MB e espera colunas equivalentes a `NR_SECAO`, `QT_VOTOS` e `NM_VOTAVEL` ou `NR_VOTAVEL`. Reconhece delimitador por vírgula ou ponto e vírgula, soma valores por rótulo/código e mostra SHA-256 do conteúdo processado, linhas válidas, seções identificadas e alertas estruturais.
+- `GET /api/live`: consulta um arquivo JSON de resultado unificado (EA20) do TSE e normaliza candidatos e indicadores.
+- `GET /api/locations`: consulta a configuração pública de municípios para preencher a seleção de cidades.
+- A interface consulta automaticamente a cada 60 segundos por padrão; também permite atualização manual.
+- A fonte é `https://resultados.tse.jus.br`; os dados só são exibidos quando o arquivo oficial é recebido. Erros/arquivos ainda não publicados são mostrados, não substituídos por dados fictícios.
+- O TSE separa eleições federais e estaduais e disponibiliza arquivos por abrangência. O painel escolhe o arquivo conforme turno e cargo.
 
-**Ainda não é um sistema eleitoral ao vivo.** Não existe agendamento de atualização, ingestão automática do TSE, armazenamento permanente dos lotes, comparação automatizada com a totalização oficial, nem resultados reais pré-carregados. Não use esta ferramenta isoladamente para declarar resultados eleitorais ou fraude.
+## Limitações importantes
 
-## Catálogo de fontes por UF
+A integração depende de os caminhos e arquivos oficiais permanecerem disponíveis e de o TSE publicar resultados para a eleição, turno, cargo e localidade selecionados. O painel não garante que a apuração esteja em andamento em todos os momentos. Fotos são carregadas da pasta pública de fotos do TSE a partir do identificador de candidato no arquivo EA20.
 
-A aba **Fontes do TSE** lista os links diretos `votacao_secao_2026_UF.zip` para AC, AL, AP, AM, BA, CE, DF, ES, GO, MA, MT, MS, MG, PA, PB, PR, PE, PI, RJ, RN, RS, RO, RR, SC, SP, SE e TO. Também reúne links dos conjuntos nacionais por candidato, partido, município-zona e seção.
+O projeto ainda não implementa verificação criptográfica JWS dos arquivos recebidos. A origem exibida é a URL consultada; não equivale a uma auditoria criptográfica independente. Percentual de seções totalizadas é diferente de percentual de votos apurados. Cargos nacionais (Presidente) podem ser consultados no Brasil/exterior; cargos estaduais dependem da UF e dos resultados publicados.
 
-O catálogo apenas organiza links públicos. Ele **não baixa, valida ou processa automaticamente os ZIPs**; confirme disponibilidade, esquema e data de atualização no portal oficial antes de interpretar os dados. Não some arquivos de granularidades diferentes como se fossem conjuntos independentes.
+## Documentação oficial
 
-## Princípios
-
-- **Sem números inventados:** não há totais de demonstração exibidos como se fossem votos reais.
-- **Soma determinística:** o motor não usa IA para alterar votos ou decidir o que deve ser contado.
-- **Alertas sem apagamento silencioso:** chaves duplicadas são sinalizadas e mantidas na soma; linhas estruturalmente inválidas são reportadas e não entram no cálculo automático.
-- **Integridade verificável:** o hash SHA-256 identifica o conteúdo recebido, mas não comprova a autenticidade do emissor ou a veracidade do arquivo.
-- **Cobertura explícita:** linhas válidas e seções distintas encontradas são mostradas; isso não garante que todas as seções do país estejam presentes.
-- **Neutralidade:** uma anomalia é um motivo para revisão, não uma prova de fraude.
-
-## Importação
-
-1. Baixe um CSV oficial de votação por seção a partir do [Portal de Dados Abertos do TSE](https://dadosabertos.tse.jus.br/dataset/resultados-2026).
-2. Confirme que o arquivo é a tabela de votação por seção e que os cabeçalhos correspondem ao formato esperado.
-3. Na página, selecione o arquivo e clique em **Processar e conferir CSV**.
-4. Compare os totais com a documentação e com a publicação oficial da mesma eleição/turno/cargo.
-
-Os cabeçalhos podem variar conforme arquivo e eleição. Se o formato não for reconhecido, a ferramenta mostra um erro em vez de inventar um resultado.
-
-## Categorias importantes
-
-- **Votos em branco e nulos** são mostrados separadamente se o arquivo contiver rótulos reconhecíveis.
-- **Abstenção** não é voto e não pode ser deduzida de um arquivo de votos por candidato; precisa de uma fonte de comparecimento/eleitorado compatível.
-- **Seção sem dados** não significa zero votos. É preciso uma lista de seções esperadas para calcular cobertura e pendências.
-- **Lula e Flávio** só aparecem com total específico se os rótulos correspondentes existirem no CSV importado. O sistema não assume candidaturas nem preenche valores ausentes.
-
-## Limitações de auditoria
-
-O endpoint calcula o hash do texto normalizado de quebras de linha recebido pelo processador. Não armazena o arquivo bruto permanentemente nem mantém uma trilha pública imutável entre requisições. O projeto ainda precisa de testes automatizados abrangentes, adaptadores específicos por eleição/formato, validação do dicionário oficial de votos, lista de seções esperadas, armazenamento de lotes e comparação de totais.
-
-O cálculo próprio é independente; a fonte pode continuar sendo oficial. Para independência de proveniência seria necessário comparar com cópias independentes dos Boletins de Urna, não apenas com outra exportação derivada do mesmo sistema.
-
-## Arquitetura planejada
-
-1. Adaptadores versionados por arquivo/eleição do TSE.
-2. Preservação de arquivos originais, metadados de origem e hashes.
-3. Validação de esquema, identificadores, duplicatas e consistência.
-4. Soma determinística e testes reproduzíveis.
-5. Comparação com totais oficiais e registro de divergências.
-6. Monitoramento de novas publicações somente quando houver fonte acessível e validada.
-7. Detecção estatística/ML apenas para priorizar revisão humana; nunca para editar votos ou concluir fraude automaticamente.
+- [Informações técnicas sobre a divulgação de resultados — TSE](https://www.tse.jus.br/eleicoes/informacoes-tecnicas-sobre-a-divulgacao-de-resultados)
+- [Instruções para download dos arquivos de divulgação 2026 — TSE](https://www.tse.jus.br/eleicoes/eleicoes-2026-content/arquivos/divulgacao-de-resultados/tse-instrucoes-para-download-dos-arquivos-da-divulgacao-2026)
+- [EA20 — arquivo de resultado unificado](https://www.tse.jus.br/eleicoes/eleicoes-2026-content/arquivos/divulgacao-de-resultados/tse-ea20-arquivo-de-resultado-unificado)
 
 ## Desenvolvimento
 
@@ -65,4 +32,4 @@ npm run dev
 npm run build
 ```
 
-API: `POST /api/audit` com multipart form-data e campo `file` (CSV; máximo 25 MB).
+A importação CSV anterior permanece disponível em `POST /api/audit`, como ferramenta complementar de conferência.
