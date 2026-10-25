@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 type Candidate = { name: string; ballotName: string; party: string; number: string; votes: number; percent: number; photo: string | null; situation: string };
 type LiveData = { source: string; updatedAt: string; scopeName: string; electionName: string; election: string; turn: number; cargo: string; candidates: Candidate[]; stats: { countedSections: number; totalSections: number; countedPercent: number; voters: number; validVotes: number; blankVotes: number; nullVotes: number; abstentions: number; electorate: number; generation: string; finalized: boolean } };
 type Place = { name: string; code: string; uf: string };
+type MapResult = { uf: string; name: string; party: "PT" | "PL" | "—"; ptPercent: number; plPercent: number; countedPercent: number; ptVotes: number; plVotes: number };
 const cargos = [{ value: "0001", label: "Presidente" }, { value: "0003", label: "Governador" }, { value: "0005", label: "Senador" }, { value: "0006", label: "Deputado federal" }, { value: "0007", label: "Deputado estadual" }, { value: "0008", label: "Deputado distrital" }];
 const ufs = [["ac","Acre"],["al","Alagoas"],["ap","Amapá"],["am","Amazonas"],["ba","Bahia"],["ce","Ceará"],["df","Distrito Federal"],["es","Espírito Santo"],["go","Goiás"],["ma","Maranhão"],["mt","Mato Grosso"],["ms","Mato Grosso do Sul"],["mg","Minas Gerais"],["pa","Pará"],["pb","Paraíba"],["pr","Paraná"],["pe","Pernambuco"],["pi","Piauí"],["rj","Rio de Janeiro"],["rn","Rio Grande do Norte"],["rs","Rio Grande do Sul"],["ro","Rondônia"],["rr","Roraima"],["sc","Santa Catarina"],["sp","São Paulo"],["se","Sergipe"],["to","Tocantins"]];
 const fmt = (n: number) => new Intl.NumberFormat("pt-BR").format(n || 0);
@@ -23,6 +24,8 @@ export default function Home() {
   const [data, setData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mapResults, setMapResults] = useState<MapResult[]>([]);
+  const [mapLoading, setMapLoading] = useState(false);
 
   const selectedUfName = ufs.find(([code]) => code === uf)?.[1] ?? uf.toUpperCase();
   const scopeLabel = scope === "br" ? "Brasil" : scope === "zz" ? "Exterior" : scope === "uf" ? selectedUfName : places.find(p => p.code === municipio)?.name ?? (scope === "extmu" ? "Localidade no exterior" : "Município");
@@ -57,6 +60,31 @@ export default function Home() {
     const timer = window.setInterval(() => { void refresh(); }, 120000);
     return () => window.clearInterval(timer);
   }, [refresh]);
+
+  useEffect(() => {
+    if (cargo !== "0001" || scope !== "br") { setMapResults([]); return; }
+    let cancelled = false;
+    const loadMap = async () => {
+      setMapLoading(true);
+      const results = await Promise.all(mapStates.map(async ([state, label]) => {
+        try {
+          const response = await fetch(`/api/live?scope=uf&uf=${state}&cargo=0001&election=${election}&turn=${turn}`, { cache: "no-store" });
+          if (!response.ok) return null;
+          const d = await response.json() as LiveData;
+          const pt = d.candidates.filter(c => /(^|\\b)PT(\\b|$)/i.test(c.party)).reduce((sum, c) => sum + c.votes, 0);
+          const pl = d.candidates.filter(c => /(^|\\b)PL(\\b|$)/i.test(c.party)).reduce((sum, c) => sum + c.votes, 0);
+          const total = pt + pl;
+          const party = total === 0 ? "—" : pt > pl ? "PT" : pl > pt ? "PL" : "—";
+          return { uf: state, name: label, party, ptPercent: total ? pt / total * 100 : 0, plPercent: total ? pl / total * 100 : 0, countedPercent: d.stats.countedPercent, ptVotes: pt, plVotes: pl } as MapResult;
+        } catch { return null; }
+      }));
+      if (!cancelled) setMapResults(results.filter((r): r is MapResult => Boolean(r)));
+      if (!cancelled) setMapLoading(false);
+    };
+    void loadMap();
+    const timer = window.setInterval(() => { void loadMap(); }, 120000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [cargo, scope, election, turn]);
 
   const filteredPlaces = useMemo(() => {
     const q = placeSearch.trim().toLocaleLowerCase("pt-BR");
@@ -94,6 +122,11 @@ export default function Home() {
 
     {error && <section className="error-panel"><strong>Resultados ainda indisponíveis</strong><p>{error}</p><p>O painel não exibe números estimados ou inventados.</p></section>}
 
+    {featured && scope === "br" && <section className="party-map-panel">
+      <div className="party-map-heading"><div><span className="live-eyebrow">MAPA ELEITORAL AO VIVO</span><h2>PT × PL por estado</h2><p>Cor indica qual dos dois partidos soma mais votos válidos para presidente no estado.</p></div><span className="map-live-status">{mapLoading ? "Atualizando…" : "Atualização automática · 2 min"}</span></div>
+      <div className="party-map-grid">{mapStates.map(([state, label]) => { const result = mapResults.find(r => r.uf === state); return <div key={state} title={result ? `${label}: PT ${pct(result.ptPercent)} (${fmt(result.ptVotes)} votos); PL ${pct(result.plPercent)} (${fmt(result.plVotes)} votos)` : `${label}: aguardando dados oficiais`} className={`party-map-state ${result?.party === "PT" ? "map-pt" : result?.party === "PL" ? "map-pl" : "map-no-data"}`}><strong>{label.toUpperCase()}</strong><span>{result ? result.party : "—"}</span><small>{result ? pct(Math.max(result.ptPercent, result.plPercent)) : "—"}</small></div>; })}</div>
+      <div className="party-map-legend"><div className="map-legend-item"><i className="map-swatch map-swatch-pt" /><div><strong>PT · Partido dos Trabalhadores</strong><span>{mapResults.length ? pct(mapResults.reduce((s,r)=>s+r.ptVotes,0) / Math.max(1,mapResults.reduce((s,r)=>s+r.ptVotes+r.plVotes,0)) * 100) : "—"} dos votos PT + PL</span></div></div><div className="map-legend-item"><i className="map-swatch map-swatch-pl" /><div><strong>PL · Partido Liberal</strong><span>{mapResults.length ? pct(mapResults.reduce((s,r)=>s+r.plVotes,0) / Math.max(1,mapResults.reduce((s,r)=>s+r.ptVotes+r.plVotes,0)) * 100) : "—"} dos votos PT + PL</span></div></div><p>Dados oficiais recebidos do TSE. Percentual calculado entre votos dos candidatos filiados ao PT e ao PL; não representa todos os votos do estado.</p></div>
+    </section>}
     {featured ? <section className="featured-grid">
       {(["lula", "flavio"] as const).map(key => {
         const c = featuredCandidates.find(item => normalize(item.name + " " + item.ballotName).includes(key));
