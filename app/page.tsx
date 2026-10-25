@@ -23,8 +23,6 @@ export default function Home() {
   const [data, setData] = useState<LiveData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [auto, setAuto] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const selectedUfName = ufs.find(([code]) => code === uf)?.[1] ?? uf.toUpperCase();
   const scopeLabel = scope === "br" ? "Brasil" : scope === "zz" ? "Exterior" : scope === "uf" ? selectedUfName : places.find(p => p.code === municipio)?.name ?? (scope === "extmu" ? "Localidade no exterior" : "Município");
@@ -54,12 +52,11 @@ export default function Home() {
     } finally { setLoading(false); }
   }, [scope, uf, municipio, cargo, election, turn]);
 
-  useEffect(() => { refresh(); }, [refresh, refreshKey]);
+  useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => {
-    if (!auto) return;
-    const timer = window.setInterval(() => setRefreshKey(k => k + 1), 60000);
+    const timer = window.setInterval(() => { void refresh(); }, 60000);
     return () => window.clearInterval(timer);
-  }, [auto]);
+  }, [refresh]);
 
   const filteredPlaces = useMemo(() => {
     const q = placeSearch.trim().toLocaleLowerCase("pt-BR");
@@ -78,7 +75,7 @@ export default function Home() {
   return <main className="live-shell">
     <header className="live-topbar">
       <a className="live-brand" href="/" aria-label="Seu Direito início"><span className="live-mark">S<span>.</span></span><span>seu direito<small>OBSERVATÓRIO ELEITORAL</small></span></a>
-      <div className="top-controls"><label className="auto-toggle"><input type="checkbox" checked={auto} onChange={e => setAuto(e.target.checked)} /><span className="toggle-ui" /> Atualização automática</label><button className="refresh-button" onClick={() => setRefreshKey(k => k + 1)} disabled={loading || ((scope === "mu" || scope === "extmu") && !municipio)}>{loading ? "Atualizando…" : "↻ Atualizar"}</button></div>
+
     </header>
 
     <section className="notice-22"><span className="notice-icon">!</span><div><strong>Votação prorrogada até 19h</strong><p>Por decisão do ministro Cristiano Zanin, o horário de votação foi estendido. A divulgação dos votos depende do recebimento e processamento dos boletins pelo TSE; não há horário fixo garantido para a conclusão.</p></div></section>
@@ -95,7 +92,7 @@ export default function Home() {
 
     <section className="results-heading"><div><span className="live-eyebrow">{scopeLabel.toLocaleUpperCase("pt-BR")}</span><h1>{selectedCargo}</h1></div><span className="turn-label">{turn}º turno · Eleições 2026</span></section>
 
-    {error && <section className="error-panel"><strong>Resultados ainda indisponíveis</strong><p>{error}</p><p>O painel não exibe números estimados ou inventados.</p><button className="refresh-button" onClick={() => setRefreshKey(k => k + 1)}>Tentar novamente</button></section>}
+    {error && <section className="error-panel"><strong>Resultados ainda indisponíveis</strong><p>{error}</p><p>O painel não exibe números estimados ou inventados.</p></section>}
 
     {featured ? <section className="featured-grid">
       {(["lula", "flavio"] as const).map(key => {
