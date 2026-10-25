@@ -60,7 +60,7 @@ export default function Home() {
 
   const filteredPlaces = useMemo(() => {
     const q = placeSearch.trim().toLocaleLowerCase("pt-BR");
-    return places.filter(p => !q || p.name.toLocaleLowerCase("pt-BR").includes(q)).slice(0, 150);
+    return places.filter(p => !q || p.name.toLocaleLowerCase("pt-BR").includes(q));
   }, [places, placeSearch]);
   const selectedCargo = cargos.find(c => c.value === cargo)?.label ?? "Cargo";
   const candidates = data?.candidates ?? [];
