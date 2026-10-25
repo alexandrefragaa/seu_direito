@@ -5,7 +5,7 @@ const ROOT = "https://resultados.tse.jus.br/oficial/ele2026";
 const UFS = new Set(["ac","al","ap","am","ba","ce","df","es","go","ma","mt","ms","mg","pa","pb","pr","pe","pi","rj","rn","rs","ro","rr","sc","sp","se","to"]);
 export async function GET(request: NextRequest) {
  const p=request.nextUrl.searchParams, turn=p.get("turn")||"2", cargo=p.get("cargo")||"0001", uf=(p.get("uf")||"sp").toLowerCase();
- if(!UFS.has(uf)) return NextResponse.json({places:[]});
+ if(uf!=="zz"&&!UFS.has(uf)) return NextResponse.json({places:[]});
  const election=cargo==="0001"?(turn==="1"?"6257":"6258"):(turn==="1"?"6259":"6260");
  const url=`${ROOT}/${election}/config/mun-e${election.padStart(6,"0")}-cm.json`;
  try {
