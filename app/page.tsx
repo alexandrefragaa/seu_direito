@@ -78,6 +78,7 @@ export default function Home() {
             <article className="stat"><span>Votos em branco</span><strong>{fmt(result.blankVotes)}</strong><small>Rótulos identificados como branco</small></article>
             <article className="stat"><span>Votos nulos</span><strong>{fmt(result.nullVotes)}</strong><small>Rótulos identificados como nulo</small></article>
           </div>
+          <div className="result-meta coverage-meta"><div><span>Abstenções</span><strong>Não calculadas</strong><p>Exigem dados de comparecimento/eleitorado</p></div><div><span>Seções sem dados</span><strong>Não calculadas</strong><p>Exigem lista de seções esperadas</p></div></div>
           <div className="section-heading results-heading"><div><p className="eyebrow">TOTALIZAÇÃO RECALCULADA</p><h2>Votos por rótulo no arquivo</h2></div><span className="pill">{result.candidates.length} RÓTULOS</span></div>
           <input className="search-input" value={search} onChange={e => setSearch(e.target.value)} placeholder="Filtrar por nome ou código…" aria-label="Filtrar candidatos" />
           <div className="table-wrap"><table><thead><tr><th>Nome / código conforme arquivo</th><th>Votos somados</th></tr></thead><tbody>{filtered.map((c, i) => <tr key={c.name + i}><td>{c.name}</td><td>{fmt(c.votes)}</td></tr>)}</tbody></table></div>
