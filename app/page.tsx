@@ -7,7 +7,7 @@ type Result = {
   candidates: { name: string; votes: number }[]; blankVotes: number; nullVotes: number; otherRows: number;
   duplicateKeys: string[]; warnings: string[]; importedAt: string; method: string;
 };
-type Tab = "visao" | "metodo" | "auditoria";
+type Tab = "visao" | "fontes" | "metodo" | "auditoria";
 const fmt = (n: number) => new Intl.NumberFormat("pt-BR").format(n);
 const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -56,6 +56,7 @@ export default function Home() {
 
       <nav className="tabs" aria-label="Seções do painel">
         <button className={tab === "visao" ? "active" : ""} onClick={() => setTab("visao")}>Importar e conferir</button>
+        <button className={tab === "fontes" ? "active" : ""} onClick={() => setTab("fontes")}>Fontes do TSE</button>
         <button className={tab === "metodo" ? "active" : ""} onClick={() => setTab("metodo")}>Como calculamos</button>
         <button className={tab === "auditoria" ? "active" : ""} onClick={() => setTab("auditoria")}>Trilha de auditoria</button>
       </nav>
@@ -86,6 +87,32 @@ export default function Home() {
           <div className="warnings"><h3>Alertas e limitações ({result.warnings.length})</h3><ul>{result.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>{result.duplicateKeys.length > 0 && <p><strong>Chaves repetidas:</strong> {result.duplicateKeys.slice(0, 20).join(", ")}{result.duplicateKeys.length > 20 ? "…" : ""}</p>}</div>
           <p className="footnote">A contagem é uma soma mecânica dos valores reconhecidos. Linhas inválidas são reportadas e ficam fora da soma automática; duplicatas válidas permanecem incluídas e são sinalizadas, sem exclusão silenciosa. Abstenções não podem ser inferidas de um CSV de votos por candidato. Nenhuma pontuação de IA é usada para modificar os totais.</p>
         </>}
+      </section>}
+
+      {tab === "fontes" && <section className="content">
+        <p className="eyebrow">CATÁLOGO DE ORIGENS</p>
+        <div className="section-heading"><div><h2>Votação por seção — 2026</h2><p className="lead">Links diretos para os arquivos por UF. Os arquivos são publicados pelo TSE; a disponibilidade e a data de atualização devem ser verificadas antes de usar os números.</p></div><span className="pill">27 UFs</span></div>
+        <div className="source-grid">
+          {[
+            ["AC","Acre"],["AL","Alagoas"],["AP","Amapá"],["AM","Amazonas"],["BA","Bahia"],["CE","Ceará"],["DF","Distrito Federal"],["ES","Espírito Santo"],["GO","Goiás"],["MA","Maranhão"],["MT","Mato Grosso"],["MS","Mato Grosso do Sul"],["MG","Minas Gerais"],["PA","Pará"],["PB","Paraíba"],["PR","Paraná"],["PE","Pernambuco"],["PI","Piauí"],["RJ","Rio de Janeiro"],["RN","Rio Grande do Norte"],["RS","Rio Grande do Sul"],["RO","Rondônia"],["RR","Roraima"],["SC","Santa Catarina"],["SP","São Paulo"],["SE","Sergipe"],["TO","Tocantins"]
+          ].map(([uf, name]) => (
+            <article className="source-row" key={uf}>
+              <span className="source-uf">{uf}</span><div className="source-name"><strong>{name}</strong><small>votacao_secao_2026_{uf}.zip</small></div>
+              <a href={`https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2026_${uf}.zip`} target="_blank" rel="noreferrer">Abrir ZIP ↗</a>
+              <button type="button" className="source-copy" onClick={() => navigator.clipboard.writeText(`https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2026_${uf}.zip`)} aria-label={`Copiar link do arquivo de ${name}`}>Copiar link</button>
+            </article>
+          ))}
+        </div>
+        <div className="source-note"><strong>Outros conjuntos nacionais</strong><p>Os conjuntos abaixo têm granularidades diferentes. Não some seus votos entre si: eles podem representar os mesmos votos em níveis ou formatos distintos.</p>
+          <ul>
+            <li><a href="https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2026.zip" target="_blank" rel="noreferrer">Votação por candidato / município-zona (ZIP)</a></li>
+            <li><a href="https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_2026.zip" target="_blank" rel="noreferrer">Votação por partido / município-zona (ZIP)</a></li>
+            <li><a href="https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2026.zip" target="_blank" rel="noreferrer">Detalhe de votação por município-zona (ZIP)</a></li>
+            <li><a href="https://cdn.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_secao/detalhe_votacao_secao_2026.zip" target="_blank" rel="noreferrer">Detalhe de votação por seção (ZIP)</a></li>
+            <li><a href="https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2026_BR.zip" target="_blank" rel="noreferrer">Votação por seção — Brasil (ZIP)</a></li>
+          </ul>
+        </div>
+        <p className="footnote">Este catálogo organiza links diretos. Nesta versão, os ZIPs não são baixados nem processados automaticamente pelo site, e os links não indicam que a disponibilidade de cada arquivo foi testada. A importação CSV experimental continua separada.</p>
       </section>}
 
       {tab === "metodo" && <section className="content">
