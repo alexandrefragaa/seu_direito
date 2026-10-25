@@ -120,6 +120,8 @@ export default function Home() {
 
     <section className="results-heading"><div><span className="live-eyebrow">{scopeLabel.toLocaleUpperCase("pt-BR")}</span><h1>{selectedCargo}</h1></div><span className="turn-label">{turn}º turno · Eleições 2026</span></section>
 
+    {featured && scope === "br" && <section className="overall-count-panel"><div><span>APURAÇÃO TOTAL DO BRASIL</span><strong>{data ? pct(data.stats.countedPercent) : "—"}</strong><small>{data ? `${fmt(data.stats.countedSections)} de ${fmt(data.stats.totalSections)} seções totalizadas` : "Aguardando dados oficiais do TSE"}</small></div><div className="overall-count-track"><i style={{width:`${Math.min(100,Math.max(0,data?.stats.countedPercent ?? 0))}%`}} /></div></section>}
+
     {error && <section className="error-panel"><strong>Resultados ainda indisponíveis</strong><p>{error}</p><p>O painel não exibe números estimados ou inventados.</p></section>}
 
     {featured && scope === "br" && <section className="party-map-panel">
