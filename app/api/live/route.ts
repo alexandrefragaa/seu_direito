@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
  const region=scope==="br"?"br":(scope==="zz"||scope==="extmu")?"zz":uf;
  let filename=`${region}-c${cargo}-e${fmtElection(election)}-u.json`;
  let scopeName=scope==="br"?"Brasil":(scope==="zz"||scope==="extmu")?"Exterior":uf.toUpperCase();
- if(scope==="mu"){ filename=`${uf}${fmtCode(municipality)}-c${cargo}-e${fmtElection(election)}-u.json`; scopeName=`${uf.toUpperCase()} · município ${municipality}`; }\n if(scope==="extmu"){ filename=`zz${fmtCode(municipality)}-c${cargo}-e${fmtElection(election)}-u.json`; scopeName=`Exterior · localidade ${municipality}`; }
+ if(scope==="mu"){ filename=`${uf}${fmtCode(municipality)}-c${cargo}-e${fmtElection(election)}-u.json`; scopeName=`${uf.toUpperCase()} · município ${municipality}`; }
+ if(scope==="extmu"){ filename=`zz${fmtCode(municipality)}-c${cargo}-e${fmtElection(election)}-u.json`; scopeName=`Exterior · localidade ${municipality}`; }
  const url=`${ROOT}/${election}/dados/${region}/${filename}`;
  try {
   const response=await fetch(url,{cache:"no-store",headers:{accept:"application/json"},signal:AbortSignal.timeout(12000)});
