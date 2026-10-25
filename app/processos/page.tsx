@@ -1,6 +1,6 @@
-import "./processos.css";
-
 "use client";
+
+import "./processos.css";
 
 import { FormEvent, useState } from "react";
 
