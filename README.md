@@ -4,9 +4,15 @@ O **Seu_direito** é um projeto para recalcular e conferir dados eleitorais com 
 
 ## Estado atual
 
-A versão publicada implementa uma **importação experimental de CSV** de votação por seção. Ela aceita arquivos de até 25 MB e espera colunas equivalentes a `NR_SECAO`, `QT_VOTOS` e `NM_VOTAVEL` ou `NR_VOTAVEL`. Reconhece delimitador por vírgula ou ponto e vírgula, soma valores por rótulo/código e mostra SHA-256 do conteúdo processado, linhas válidas, seções identificadas e alertas estruturais.
+A versão publicada implementa uma **importação experimental de CSV** de votação por seção e um catálogo de links diretos dos arquivos de votação por seção para as 27 UFs, além de cinco conjuntos nacionais. Ela aceita arquivos de até 25 MB e espera colunas equivalentes a `NR_SECAO`, `QT_VOTOS` e `NM_VOTAVEL` ou `NR_VOTAVEL`. Reconhece delimitador por vírgula ou ponto e vírgula, soma valores por rótulo/código e mostra SHA-256 do conteúdo processado, linhas válidas, seções identificadas e alertas estruturais.
 
 **Ainda não é um sistema eleitoral ao vivo.** Não existe agendamento de atualização, ingestão automática do TSE, armazenamento permanente dos lotes, comparação automatizada com a totalização oficial, nem resultados reais pré-carregados. Não use esta ferramenta isoladamente para declarar resultados eleitorais ou fraude.
+
+## Catálogo de fontes por UF
+
+A aba **Fontes do TSE** lista os links diretos `votacao_secao_2026_UF.zip` para AC, AL, AP, AM, BA, CE, DF, ES, GO, MA, MT, MS, MG, PA, PB, PR, PE, PI, RJ, RN, RS, RO, RR, SC, SP, SE e TO. Também reúne links dos conjuntos nacionais por candidato, partido, município-zona e seção.
+
+O catálogo apenas organiza links públicos. Ele **não baixa, valida ou processa automaticamente os ZIPs**; confirme disponibilidade, esquema e data de atualização no portal oficial antes de interpretar os dados. Não some arquivos de granularidades diferentes como se fossem conjuntos independentes.
 
 ## Princípios
 
