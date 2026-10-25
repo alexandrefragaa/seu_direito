@@ -81,7 +81,7 @@ export default function Home() {
       <div className="top-controls"><label className="auto-toggle"><input type="checkbox" checked={auto} onChange={e => setAuto(e.target.checked)} /><span className="toggle-ui" /> Atualização automática</label><button className="refresh-button" onClick={() => setRefreshKey(k => k + 1)} disabled={loading || ((scope === "mu" || scope === "extmu") && !municipio)}>{loading ? "Atualizando…" : "↻ Atualizar"}</button></div>
     </header>
 
-    <section className="notice-22"><span className="notice-icon">!</span><div><strong>Previsão de atualização: 22h</strong><p>Horário sujeito a confirmação oficial. Os números serão exibidos assim que os arquivos forem publicados pelo TSE.</p></div></section>
+    <section className="notice-22"><span className="notice-icon">!</span><div><strong>Votação prorrogada até 19h</strong><p>Por decisão do ministro Cristiano Zanin, o horário de votação foi estendido. A divulgação dos votos depende do recebimento e processamento dos boletins pelo TSE; não há horário fixo garantido para a conclusão.</p></div></section>
 
     <section className="filters-panel">
       <div className="filters">
