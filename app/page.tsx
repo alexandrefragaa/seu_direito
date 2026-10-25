@@ -54,7 +54,7 @@ export default function Home() {
 
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => {
-    const timer = window.setInterval(() => { void refresh(); }, 60000);
+    const timer = window.setInterval(() => { void refresh(); }, 120000);
     return () => window.clearInterval(timer);
   }, [refresh]);
 
