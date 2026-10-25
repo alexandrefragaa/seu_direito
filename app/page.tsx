@@ -64,7 +64,7 @@ export default function Home() {
   }, [places, placeSearch]);
   const selectedCargo = cargos.find(c => c.value === cargo)?.label ?? "Cargo";
   const candidates = data?.candidates ?? [];
-  const featured = cargo === "0001" && scope === "br";
+  const featured = cargo === "0001";
   const featuredCandidates = useMemo(() => {
     if (!featured) return [];
     const lula = candidates.find(c => normalize(c.name + " " + c.ballotName).includes("lula"));
