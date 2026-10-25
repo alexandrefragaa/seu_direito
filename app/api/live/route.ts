@@ -34,8 +34,14 @@ export async function GET(request: NextRequest) {
   const raw=await response.json(), cargoRows=Array.isArray(raw.carg)?raw.carg:[], cargoData=cargoRows.find((x:any)=>String(x.cd).padStart(4,"0")===cargo)||cargoRows[0], candidates:any[]=[];
   for(const agr of (cargoData?.agr||[])) for(const par of (agr.par||[])) for(const cand of (par.cand||[])) candidates.push({name:cand.nm||cand.nmu||"Candidato sem nome",ballotName:cand.nmu||cand.nm||"Candidato",party:par.sg||"",number:String(cand.n??""),votes:Number(cand.vap||0),percent:Number(cand.pvap||0),photo:cand.sqcand?`${ROOT}/${election}/fotos/${region}/${cand.sqcand}.jpeg`:null,situation:cand.st||""});
   candidates.sort((a,b)=>b.votes-a.votes);
+  // Do not expose cached/pre-publication totals for the second round before the stated 19:00 BRT publication gate.
+  const localNow = new Date().toLocaleString("sv-SE", { timeZone: "America/Sao_Paulo", hour12: false });
+  const publicationPending = election === "6258" && localNow < "2026-10-25 19:00:00";
+  const visibleCandidates = publicationPending ? candidates.map(c => ({ ...c, votes: 0, percent: 0 })) : candidates;
   const totalSections=Number(raw.s?.ts||0), countedSections=Number(raw.s?.st||0);
-  const stats={countedSections,totalSections,countedPercent:totalSections>0?Number(raw.s?.pst||(countedSections/totalSections*100)):0,voters:Number(raw.e?.c||0),validVotes:Number(raw.v?.vv||0),blankVotes:Number(raw.v?.vb||0),nullVotes:Number(raw.v?.vn||0)+Number(raw.v?.vnt||0),abstentions:Number(raw.e?.a||0),electorate:Number(raw.e?.te||0),generation:[raw.dg,raw.hg].filter(Boolean).join(" "),finalized:raw.and==="f"};
-  return NextResponse.json({source:url,updatedAt:new Date().toISOString(),scopeName,electionName:elections[election].label,election,turn,cargo:cargoData?.nmn||cargoData?.nmm||cargoData?.nmf||cargo,candidates,stats,raw:{ele:raw.ele,idg:raw.idg,dg:raw.dg,hg:raw.hg,tpabr:raw.tpabr,cdabr:raw.cdabr,and:raw.and,tf:raw.tf}},{headers:{"Cache-Control":"no-store, max-age=0"}});
+  const stats=publicationPending
+   ? {countedSections:0,totalSections,countedPercent:0,voters:0,validVotes:0,blankVotes:0,nullVotes:0,abstentions:0,electorate:Number(raw.e?.te||0),generation:"Aguardando horário de divulgação",finalized:false}
+   : {countedSections,totalSections,countedPercent:totalSections>0?Number(raw.s?.pst||(countedSections/totalSections*100)):0,voters:Number(raw.e?.c||0),validVotes:Number(raw.v?.vv||0),blankVotes:Number(raw.v?.vb||0),nullVotes:Number(raw.v?.vn||0)+Number(raw.v?.vnt||0),abstentions:Number(raw.e?.a||0),electorate:Number(raw.e?.te||0),generation:[raw.dg,raw.hg].filter(Boolean).join(" "),finalized:raw.and==="f"};
+  return NextResponse.json({source:url,updatedAt:new Date().toISOString(),scopeName,electionName:elections[election].label,election,turn,cargo:cargoData?.nmn||cargoData?.nmm||cargoData?.nmf||cargo,candidates:visibleCandidates,stats,publicationPending,raw:{ele:raw.ele,idg:raw.idg,dg:raw.dg,hg:raw.hg,tpabr:raw.tpabr,cdabr:raw.cdabr,and:raw.and,tf:raw.tf}},{headers:{"Cache-Control":"no-store, max-age=0"}});
  } catch { return NextResponse.json({error:"Não foi possível conectar à fonte oficial do TSE neste momento. Tente novamente.",source:url},{status:502}); }
 }
