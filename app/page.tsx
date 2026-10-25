@@ -27,12 +27,12 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const selectedUfName = ufs.find(([code]) => code === uf)?.[1] ?? uf.toUpperCase();
-  const scopeLabel = scope === "br" ? "Brasil" : scope === "zz" ? "Exterior" : scope === "uf" ? selectedUfName : places.find(p => p.code === municipio)?.name ?? "Município";
+  const scopeLabel = scope === "br" ? "Brasil" : scope === "zz" ? "Exterior" : scope === "uf" ? selectedUfName : places.find(p => p.code === municipio)?.name ?? (scope === "extmu" ? "Localidade no exterior" : "Município");
 
   useEffect(() => {
-    if (scope !== "mu") return;
+    if (scope !== "mu" && scope !== "extmu") return;
     const controller = new AbortController();
-    fetch(`/api/locations?turn=${turn}&cargo=${cargo}&uf=${uf}`, { signal: controller.signal, cache: "no-store" })
+    fetch(`/api/locations?turn=${turn}&cargo=${cargo}&uf=${scope === "extmu" ? "zz" : uf}`, { signal: controller.signal, cache: "no-store" })
       .then(r => r.ok ? r.json() : Promise.reject(new Error("Não foi possível carregar a lista de municípios.")))
       .then(d => setPlaces(Array.isArray(d.places) ? d.places : []))
       .catch(e => { if (e.name !== "AbortError") setPlaces([]); });
@@ -41,8 +41,8 @@ export default function Home() {
 
   const refresh = useCallback(async () => {
     setLoading(true); setError("");
-    const params = new URLSearchParams({ scope, uf, cargo, election, turn });
-    if (scope === "mu") params.set("municipio", municipio);
+    const params = new URLSearchParams({ scope, uf: scope === "extmu" ? "zz" : uf, cargo, election, turn });
+    if (scope === "mu" || scope === "extmu") params.set("municipio", municipio);
     try {
       const response = await fetch(`/api/live?${params.toString()}`, { cache: "no-store" });
       const json = await response.json();
@@ -84,12 +84,12 @@ export default function Home() {
     <section className="control-panel">
       <div className="panel-title"><div><span className="live-eyebrow">EXPLORE OS RESULTADOS</span><h2>Escolha onde acompanhar</h2></div><label className="auto-toggle"><input type="checkbox" checked={auto} onChange={e => setAuto(e.target.checked)} /><span className="toggle-ui" /> Atualização automática</label></div>
       <div className="filters">
-        <label>Localidade<select value={scope} onChange={e => { const next = e.target.value; setScope(next); setMunicipio(""); setPlaceSearch(""); if ((next === "br" || next === "zz") && cargo !== "0001") setCargo("0001"); }}><option value="br">Brasil inteiro</option><option value="uf">Estado</option><option value="mu">Cidade / município</option><option value="zz">Exterior</option></select></label>
+        <label>Localidade<select value={scope} onChange={e => { const next = e.target.value; setScope(next); setMunicipio(""); setPlaceSearch(""); if ((next === "br" || next === "zz") && cargo !== "0001") setCargo("0001"); }}><option value="br">Brasil inteiro</option><option value="uf">Estado</option><option value="mu">Cidade / município no Brasil</option><option value="zz">Exterior (total)</option><option value="extmu">Cidade / localidade no exterior</option></select></label>
         {(scope === "uf" || scope === "mu") && <label>Estado<select value={uf} onChange={e => { setUf(e.target.value); setMunicipio(""); }} >{ufs.map(([code, name]) => <option value={code} key={code}>{name}</option>)}</select></label>}
-        {scope === "mu" && <label className="city-field">Buscar cidade<select value={municipio} onChange={e => setMunicipio(e.target.value)}><option value="">Selecione um município</option>{filteredPlaces.map(p => <option value={p.code} key={p.code}>{p.name}</option>)}</select><input value={placeSearch} onChange={e => setPlaceSearch(e.target.value)} placeholder="Filtrar municípios…" /></label>}
+        {(scope === "mu" || scope === "extmu") && <label className="city-field">{scope === "extmu" ? "País / localidade no exterior" : "Buscar cidade"}<select value={municipio} onChange={e => setMunicipio(e.target.value)}><option value="">Selecione um município</option>{filteredPlaces.map(p => <option value={p.code} key={p.code}>{p.name}</option>)}</select><input value={placeSearch} onChange={e => setPlaceSearch(e.target.value)} placeholder="Filtrar municípios…" /></label>}
         <label>Cargo<select value={cargo} onChange={e => { const next = e.target.value; setCargo(next); if (next !== "0001" && (scope === "br" || scope === "zz")) setScope("uf"); }}>{cargos.filter(c => !(scope === "br" || scope === "zz") || c.value === "0001").map(c => <option key={c.value} value={c.value}>{c.label}</option>)}</select></label>
         <label>Turno<select value={turn} onChange={e => { setTurn(e.target.value); setElection(cargo === "0001" ? (e.target.value === "1" ? "6257" : "6258") : (e.target.value === "1" ? "6259" : "6260")); }}><option value="1">1º turno</option><option value="2">2º turno</option></select></label>
-        <button className="refresh-button" onClick={() => setRefreshKey(k => k + 1)} disabled={loading || (scope === "mu" && !municipio)}>{loading ? "Consultando…" : "↻ Atualizar agora"}</button>
+        <button className="refresh-button" onClick={() => setRefreshKey(k => k + 1)} disabled={loading || ((scope === "mu" || scope === "extmu") && !municipio)}>{loading ? "Consultando…" : "↻ Atualizar agora"}</button>
       </div>
       <div className="source-line"><span>Fonte: Tribunal Superior Eleitoral (TSE)</span><span>Atualização automática: {auto ? "a cada 60 segundos" : "desativada"}</span>{lastChecked && <span>Última consulta: {new Date(lastChecked).toLocaleTimeString("pt-BR")}</span>}</div>
     </section>
