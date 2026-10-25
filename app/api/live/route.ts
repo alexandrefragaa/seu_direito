@@ -15,17 +15,17 @@ const fmtElection = (e: string) => e.padStart(6, "0");
 const fmtCode = (s: string) => s.padStart(5, "0");
 export async function GET(request: NextRequest) {
  const p=request.nextUrl.searchParams, scope=p.get("scope")||"br", uf=(p.get("uf")||"sp").toLowerCase(), cargo=p.get("cargo")||"0001", requestedElection=p.get("election")||"6258", turn=Number(p.get("turn")||elections[requestedElection]?.turn||2), municipality=p.get("municipio")||"";
- if(!["br","uf","mu","zz"].includes(scope)) return NextResponse.json({error:"Localidade inválida."},{status:400});
+ if(!["br","uf","mu","zz","extmu"].includes(scope)) return NextResponse.json({error:"Localidade inválida."},{status:400});
  if(!CARGOS.has(cargo)) return NextResponse.json({error:"Cargo inválido."},{status:400});
  if(!elections[requestedElection]||elections[requestedElection].turn!==turn) return NextResponse.json({error:"Combinação de eleição e turno indisponível."},{status:400});
  if((scope==="uf"||scope==="mu")&&!UFS.has(uf)) return NextResponse.json({error:"Estado inválido."},{status:400});
  if(scope==="mu"&&!/^\d{5}$/.test(municipality)) return NextResponse.json({error:"Selecione um município da lista."},{status:400});
- if((scope==="br"||scope==="zz")&&cargo!=="0001") return NextResponse.json({error:"No Brasil e no exterior, selecione Presidente."},{status:400});
+ if((scope==="br"||scope==="zz"||scope==="extmu")&&cargo!=="0001") return NextResponse.json({error:"No Brasil e no exterior, selecione Presidente."},{status:400});
  const election = cargo==="0001" ? (turn===1?"6257":"6258") : (turn===1?"6259":"6260");
- const region=scope==="br"?"br":scope==="zz"?"zz":uf;
+ const region=scope==="br"?"br":(scope==="zz"||scope==="extmu")?"zz":uf;
  let filename=`${region}-c${cargo}-e${fmtElection(election)}-u.json`;
- let scopeName=scope==="br"?"Brasil":scope==="zz"?"Exterior":uf.toUpperCase();
- if(scope==="mu"){ filename=`${uf}${fmtCode(municipality)}-c${cargo}-e${fmtElection(election)}-u.json`; scopeName=`${uf.toUpperCase()} · município ${municipality}`; }
+ let scopeName=scope==="br"?"Brasil":(scope==="zz"||scope==="extmu")?"Exterior":uf.toUpperCase();
+ if(scope==="mu"){ filename=`${uf}${fmtCode(municipality)}-c${cargo}-e${fmtElection(election)}-u.json`; scopeName=`${uf.toUpperCase()} · município ${municipality}`; }\n if(scope==="extmu"){ filename=`zz${fmtCode(municipality)}-c${cargo}-e${fmtElection(election)}-u.json`; scopeName=`Exterior · localidade ${municipality}`; }
  const url=`${ROOT}/${election}/dados/${region}/${filename}`;
  try {
   const response=await fetch(url,{cache:"no-store",headers:{accept:"application/json"},signal:AbortSignal.timeout(12000)});
